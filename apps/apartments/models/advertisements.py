@@ -1,10 +1,10 @@
 from django.db import models
-from apps.users.models import User
+from apps.users.models.user import User
 from apps.apartments.choices.properties import Properties
 
 
 class Advertisement(models.Model):
-    user = models.ForeignKey(User, related_name='advertisements', on_delete=models.CASCADE)
+    owner = models.ForeignKey(User, related_name='advertisements', on_delete=models.CASCADE)
     title = models.CharField(max_length=200)
     description = models.TextField()
     price_per_night = models.DecimalField(max_digits=10, decimal_places=2)
@@ -21,4 +21,6 @@ class Advertisement(models.Model):
     )
 
     def __str__(self):
-        return f"{self.title} by {self.user.username}"
+        return self.title
+        # return f"{self.title} by {self.user.username}"
+
