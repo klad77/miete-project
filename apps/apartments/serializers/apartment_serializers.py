@@ -8,4 +8,5 @@ class AdvertisementSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Advertisement
-        fields = ['id', 'title', 'description', 'price_per_night', 'created_at', 'owner', 'rooms']
+        fields = '__all__'
+        # fields = ['id', 'title', 'description', 'price_per_night', 'created_at', 'owner', 'rooms']

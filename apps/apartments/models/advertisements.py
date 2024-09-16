@@ -14,6 +14,7 @@ class Advertisement(models.Model):
     rooms = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
     properties = models.CharField(
         max_length=15,
         choices=Properties.choices,
@@ -23,4 +24,3 @@ class Advertisement(models.Model):
     def __str__(self):
         return self.title
         # return f"{self.title} by {self.user.username}"
-
