@@ -4,6 +4,7 @@ from apps.apartments.views.advertisement_status import ToggleAdvertisementStatus
 from apps.apartments.views.apartament_search import AdvertisementListSearchView
 from apps.apartments.views.raiting_views import AdvertisementReviewListView
 from apps.apartments.views.create_raitings import CreateRatingView
+from apps.apartments.views.search_history_views import *
 
 
 urlpatterns = [
@@ -14,5 +15,6 @@ urlpatterns = [
     path('advertisements/<int:advertisement_id>/reviews/', AdvertisementReviewListView.as_view(),
          name='advertisement-reviews'),
     path('advertisements/<int:advertisement_id>/add-review/', CreateRatingView.as_view(), name='add-review'),
-
+    path('search-history/', SearchHistoryListView.as_view(), name='search-history'),
+    path('search/popular/', PopularSearchView.as_view(), name='popular-search'),
 ]

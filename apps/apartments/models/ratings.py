@@ -7,7 +7,7 @@ from apps.apartments.models.advertisements import Advertisement
 class Rating(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='ratings')
     advertisement = models.ForeignKey(Advertisement, on_delete=models.CASCADE, related_name='ratings')
-    rating = models.IntegerField()  # Целое число от 1 до 10
+    rating = models.PositiveIntegerField()  # Целое число от 1 до 10
     review = models.TextField(blank=True)  # Отзыв (может быть пустым)
     created_at = models.DateTimeField(auto_now_add=True)
 
