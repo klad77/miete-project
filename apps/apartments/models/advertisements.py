@@ -21,6 +21,12 @@ class Advertisement(models.Model):
         default=Properties.ROOM
     )
 
+    def average_rating(self):
+        ratings = self.ratings.all()
+        if ratings.exists():
+            return ratings.aggregate(models.Avg('rating'))['rating__avg']
+        return None
+
     def __str__(self):
         return self.title
         # return f"{self.title} by {self.user.username}"

@@ -6,7 +6,6 @@ class Properties(Enum):
     HOUSE = "House"
     ROOM = "Room"
 
-
     @classmethod
     def choices(cls):
         return [(attr.name, attr.value) for attr in cls]
