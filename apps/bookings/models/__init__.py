@@ -1,1 +1,1 @@
-from .bookings import *
+from .bookings import Booking

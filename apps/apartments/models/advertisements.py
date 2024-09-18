@@ -15,6 +15,7 @@ class Advertisement(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
+    view_count = models.PositiveIntegerField(default=0)
     properties = models.CharField(
         max_length=15,
         choices=Properties.choices,
@@ -28,5 +29,4 @@ class Advertisement(models.Model):
         return None
 
     def __str__(self):
-        return self.title
-        # return f"{self.title} by {self.user.username}"
+        return f"{self.title}, просмотры: {self.view_count}"
