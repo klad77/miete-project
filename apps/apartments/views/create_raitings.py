@@ -18,5 +18,5 @@ class CreateRatingView(generics.CreateAPIView):
     def perform_create(self, serializer):
         advertisement_id = self.kwargs['advertisement_id']
         advertisement = Advertisement.objects.get(id=advertisement_id)
-        serializer.save(user=self.request.user, advertisement=advertisement)
+        # serializer.save(user=self.request.user, advertisement=advertisement)
         serializer.save(user=self.request.user)

@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'django_filters',
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
+    'drf_yasg',
     'apps.users.apps.UsersConfig',
     'apps.bookings.apps.BookingsConfig',
     'apps.apartments.apps.ApartmentsConfig',

@@ -58,8 +58,9 @@ def set_jwt_cookies(response, user):
 
 
 class RegisterUserGenericView(generics.CreateAPIView):
+    serializer_class = RegisterUserSerializer
     def post(self, request):
-        serializer = RegisterUserSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
             response = Response({

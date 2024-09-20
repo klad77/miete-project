@@ -9,7 +9,7 @@ class AdvertisementFilter(django_filters.FilterSet):
     city = django_filters.CharFilter(field_name='city', lookup_expr='icontains')
     min_rooms = django_filters.NumberFilter(field_name='rooms', lookup_expr='gte')
     max_rooms = django_filters.NumberFilter(field_name='rooms', lookup_expr='lte')
-    property_type = django_filters.ChoiceFilter(field_name='properties', choices=Properties.choices)
+    property_type = django_filters.ChoiceFilter(field_name='properties', choices=Properties.choices())
 
     class Meta:
         model = Advertisement
