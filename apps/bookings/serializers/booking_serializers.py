@@ -10,7 +10,8 @@ class BookingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Booking
-        fields = ['id', 'user', 'advertisement', 'start_date', 'end_date']
+        fields = '__all__'
+        # fields = ['id', 'user', 'advertisement', 'start_date', 'end_date']
 
 
 class CreateBookingSerializer(serializers.ModelSerializer):

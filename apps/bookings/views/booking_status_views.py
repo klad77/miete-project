@@ -4,6 +4,7 @@ from apps.bookings.models import Booking
 from apps.bookings.serializers.booking_serializers import BookingSerializer
 from rest_framework import status
 
+
 class OwnerBookingListView(generics.ListAPIView):
     serializer_class = BookingSerializer
     permission_classes = [permissions.IsAuthenticated]

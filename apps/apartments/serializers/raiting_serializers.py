@@ -7,7 +7,7 @@ from apps.bookings.models.bookings import Booking
 class RatingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rating
-        fields = ['user', 'advertisement', 'rating', 'review', 'created_at']
+        fields = ['user', 'advertisement_id', 'rating', 'review', 'created_at']
         read_only_fields = ['created_at']
 
     def validate(self, data):
@@ -45,96 +45,3 @@ class RatingSerializer(serializers.ModelSerializer):
             **validated_data
         )
         return rating
-
-# class RatingSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Rating
-#         fields = ['user', 'advertisement', 'rating', 'review', 'created_at']
-#         read_only_fields = ['user', 'advertisement', 'created_at']
-#
-#     def validate(self, data):
-#         user = self.context['request'].user
-#         advertisement_id = self.context['advertisement_id']  # Получаем ID объявления из контекста
-#
-#         # Логирование для отладки
-#         print(f"Validating for Advertisement ID: {advertisement_id}")
-#
-#         try:
-#             booking = Booking.objects.get(
-#                 user=user,
-#                 advertisement_id=advertisement_id,
-#                 is_completed=True
-#             )
-#         except Booking.DoesNotExist:
-#             raise ValidationError('You can only leave a rating or review after the booking is completed.')
-#
-#         return data
-#
-#     def create(self, validated_data):
-#         user = self.context['request'].user
-#         advertisement_id = self.context['advertisement_id']
-#
-#         # Логирование для отладки
-#         print(f"Creating review for Advertisement ID: {advertisement_id}")
-#
-#         # Получаем бронирование
-#         booking = Booking.objects.get(
-#             user=user,
-#             advertisement_id=advertisement_id,
-#             is_completed=True
-#         )
-#
-#         rating = Rating.objects.create(
-#             user=user,
-#             advertisement_id=advertisement_id,
-#             booking=booking,
-#             **validated_data
-#         )
-#         return rating
-
-# class RatingSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Rating
-#         fields = ['user', 'advertisement', 'rating', 'review', 'created_at']
-#         read_only_fields = ['user', 'advertisement', 'created_at']
-#
-#     def validate(self, data):
-#         user = self.context['request'].user
-#         advertisement_id = self.context['advertisement_id']  # Получаем ID объявления из контекста
-#
-#         # Логирование для отладки
-#         print(f"Validating for Advertisement ID: {advertisement_id}")
-#
-#         try:
-#             booking = Booking.objects.get(
-#                 user=user,
-#                 advertisement_id=advertisement_id,
-#                 is_completed=True
-#             )
-#         except Booking.DoesNotExist:
-#             raise ValidationError('You can only leave a rating or review after the booking is completed.')
-#
-#         return data
-#
-#     def create(self, validated_data):
-#         user = self.context['request'].user
-#         advertisement_id = self.context['advertisement_id']
-#
-#         # Логирование для отладки
-#         print(f"Creating review for Advertisement ID: {advertisement_id}")
-#
-#         # Получаем бронирование
-#         booking = Booking.objects.get(
-#             user=user,
-#             advertisement_id=advertisement_id,
-#             is_completed=True
-#         )
-#
-#         rating = Rating.objects.create(
-#             user=user,
-#             advertisement_id=advertisement_id,
-#             booking=booking,
-#             **validated_data
-#         )
-#         return rating
-
