@@ -12,3 +12,6 @@ venv/
 .env
 
 documents/
+
+# Локальна база даних SQLite
+db.sqlite3
