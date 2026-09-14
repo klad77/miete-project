@@ -3,7 +3,7 @@ from apps.users.models.user import User
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 import re
-
+from apps.users.choices.positions import Positions
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -34,7 +34,6 @@ class RegisterUserSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'email',
-            'position',
             'password',
             're_password',
         )
@@ -78,7 +77,18 @@ class RegisterUserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         password = validated_data.pop('password')
         validated_data.pop('re_password')
+
+        validated_data['position'] = Positions.USER.name
+
         user = User(**validated_data)
         user.set_password(password)
         user.save()
+
         return user
+
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(
+        write_only=True,
+        trim_whitespace=False,
+    )
