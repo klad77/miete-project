@@ -10,6 +10,12 @@ class RatingSerializer(serializers.ModelSerializer):
         fields = ['user', 'advertisement_id', 'rating', 'review', 'created_at']
         read_only_fields = ['created_at']
 
+    def validate_rating(self, value):
+        # Ensure rating is within the valid range (1-10)
+        if value < 1 or value > 10:
+            raise serializers.ValidationError("Rating must be between 1 and 10.")
+        return value
+
     def validate(self, data):
         user = self.context['request'].user
         advertisement_id = self.context['advertisement_id']  # Получаем ID объявления из контекста

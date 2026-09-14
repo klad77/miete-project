@@ -20,4 +20,7 @@ class UserBookingListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Booking.objects.none()
+
         return Booking.objects.filter(user=self.request.user)

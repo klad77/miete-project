@@ -13,6 +13,9 @@ class BookingDetailView(generics.RetrieveUpdateAPIView):
         """
         Возвращает бронирование с указанным ID для текущего пользователя.
         """
+        if getattr(self, 'swagger_fake_view', False):
+            return Booking.objects.none()
+
         return Booking.objects.filter(user=self.request.user)
 
     def patch(self, request, *args, **kwargs):

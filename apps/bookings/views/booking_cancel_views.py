@@ -12,8 +12,11 @@ class CancelBookingView(generics.UpdateAPIView):
 
     def get_queryset(self):
         """
-        Возвращает бронирования, которые принадлежат текущему пользователю.
+        Повертає бронювання поточного авторизованого користувача.
         """
+        if getattr(self, 'swagger_fake_view', False):
+            return Booking.objects.none()
+
         return Booking.objects.filter(user=self.request.user)
 
     def patch(self, request, *args, **kwargs):

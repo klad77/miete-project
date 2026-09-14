@@ -14,6 +14,9 @@ class Rating(models.Model):
     review = models.TextField(blank=True)  # Отзыв (может быть пустым)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ['id']
+
     def __str__(self):
         return f"Rating {self.rating} by {self.user} for {self.advertisement}"
 

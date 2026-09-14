@@ -1,20 +1,27 @@
 from rest_framework import generics
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from django.utils import timezone
-from datetime import timedelta
+from rest_framework.response import Response
+
 from apps.apartments.models.advertisements import Advertisement
+from apps.apartments.serializers.available_dates_serializers import (
+    AvailableDatesSerializer,
+)
 
 
 class AvailableDatesView(generics.RetrieveAPIView):
     """
-    Представление для получения доступных дат для бронирования
-    по конкретному объявлению.
+    Повертає доступні для бронювання дати конкретного оголошення.
     """
+
+    serializer_class = AvailableDatesSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     queryset = Advertisement.objects.all()
+    lookup_url_kwarg = 'id'
 
     def get(self, request, *args, **kwargs):
-        advertisement = self.get_object()  # Получаем объявление по id из URL
-        available_dates = advertisement.get_available_dates()  # Вызываем метод для получения свободных дат
-        return Response({"available_dates": available_dates})
+        advertisement = self.get_object()
+        available_dates = advertisement.get_available_dates()
+
+        return Response({
+            'available_dates': available_dates,
+        })

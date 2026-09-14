@@ -9,5 +9,11 @@ class AdvertisementViewHistoryView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        # Возвращает историю просмотров только для авторизованного пользователя
-        return AdvertisementView.objects.filter(user=self.request.user).order_by('-viewed_at')
+        # Під час створення Swagger-схеми користувач відсутній
+        if getattr(self, 'swagger_fake_view', False):
+            return AdvertisementView.objects.none()
+
+        # Історія переглядів поточного авторизованого користувача
+        return AdvertisementView.objects.filter(
+            user=self.request.user
+        ).order_by('-viewed_at')

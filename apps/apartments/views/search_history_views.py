@@ -3,13 +3,20 @@ from django.db.models import Count
 from rest_framework.response import Response
 from apps.apartments.models.search_history import SearchHistory
 from apps.apartments.serializers.search_history_serializers import *
+from rest_framework.permissions import IsAuthenticated
 
 
 class SearchHistoryListView(generics.ListAPIView):
     serializer_class = SearchHistorySerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return SearchHistory.objects.filter(user=self.request.user).order_by('-searched_at')
+        if getattr(self, 'swagger_fake_view', False):
+            return SearchHistory.objects.none()
+
+        return SearchHistory.objects.filter(
+            user=self.request.user
+        ).order_by('-searched_at')
 
 
 class PopularSearchView(generics.ListAPIView):

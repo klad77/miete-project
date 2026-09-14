@@ -10,8 +10,14 @@ class OwnerBookingListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # Фильтрация по объявлениям владельца
-        return Booking.objects.filter(advertisement__owner=self.request.user)
+        # Під час створення Swagger-схеми користувач відсутній
+        if getattr(self, 'swagger_fake_view', False):
+            return Booking.objects.none()
+
+        # Бронювання квартир, що належать поточному власнику
+        return Booking.objects.filter(
+            advertisement__owner=self.request.user
+        )
 
     def patch(self, request, *args, **kwargs):
         booking = self.get_object()
