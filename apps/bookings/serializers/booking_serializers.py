@@ -17,14 +17,14 @@ class BookingSerializer(serializers.ModelSerializer):
 class CreateBookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
-        fields = ['user', 'advertisement', 'start_date', 'end_date']  # Поля, которые передаются при создании бронирования
+        fields = ['advertisement', 'start_date', 'end_date']  # Поля, которые передаются при создании бронирования
 
     def validate(self, data):
         """
         Проверка, чтобы даты были корректны.
         """
-        start_date = data.get('start_date')
-        end_date = data.get('end_date')
+        start_date = data['start_date']
+        end_date = data['end_date']
 
         # Проверка, чтобы дата начала бронирования была не в прошлом
         if start_date < timezone.now().date():
@@ -33,6 +33,20 @@ class CreateBookingSerializer(serializers.ModelSerializer):
         # Проверка, чтобы дата окончания была позже даты начала
         if end_date <= start_date:
             raise serializers.ValidationError("Дата окончания должна быть позже даты начала бронирования.")
+
+        advertisement = data['advertisement']
+
+        overlapping = Booking.objects.filter(
+            advertisement=advertisement,
+            status__in=[Booking.PENDING, Booking.CONFIRMED],
+            start_date__lt=end_date,
+            end_date__gt=start_date,
+        ).exists()
+
+        if overlapping:
+            raise serializers.ValidationError(
+                "Ці дати вже зайняті іншим бронюванням."
+       )
 
         return data
 

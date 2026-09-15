@@ -33,22 +33,25 @@ class Advertisement(models.Model):
 
     def get_available_dates(self):
         """
-        Возвращает список доступных для бронирования дат на следующие 3 месяца.
+        Повертає вільні дати на наступні 90 днів.
+        Дата виїзду вже вільна для нового бронювання.
         """
         current_date = timezone.now().date()
 
-        # Получаем все бронирования для данного объявления
-        bookings = self.bookings.filter(end_date__gte=current_date)  # Используем self для доступа к текущему объявлению
+        bookings = self.bookings.filter(
+            status__in=['pending', 'confirmed'],
+            end_date__gt=current_date,
+        )
 
-        # Список доступных дат
         available_dates = []
 
-        # Цикл на 3 месяца вперед (90 дней)
         for i in range(90):
             date = current_date + timedelta(days=i)
 
-            # Проверяем, что дата не занята
-            if not bookings.filter(start_date__lte=date, end_date__gte=date).exists():
+            if not bookings.filter(
+                start_date__lte=date,
+                end_date__gt=date,
+            ).exists():
                 available_dates.append(date)
 
         return available_dates

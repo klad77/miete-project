@@ -30,17 +30,17 @@ class Booking(models.Model):
 
     def check_booking_status(self):
         """
-        Проверяет, истекло ли бронирование, и обновляет статус is_completed.
+        Перевіряє, чи завершилося бронювання.
         """
         if self.end_date <= timezone.now().date() and self.status == self.CONFIRMED:
             self.is_completed = True
             self.status = self.COMPLETED
-            self.save()  # Сохраняем изменения в базе данных
+            #self.save()  # Сохраняем изменения в базе данных
         return self.is_completed
 
     def cancel_booking(self):
         """
-        Отмена бронирования, если до начала бронирования больше 2 дней.
+        Відміна бронювання, якщо до початку бронювання більше 2 днів.
         """
         days_until_start = (self.start_date - timezone.now().date()).days
         if days_until_start > 2:

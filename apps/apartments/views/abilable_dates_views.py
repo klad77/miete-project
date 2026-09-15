@@ -16,7 +16,6 @@ class AvailableDatesView(generics.RetrieveAPIView):
     serializer_class = AvailableDatesSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     queryset = Advertisement.objects.all()
-    lookup_url_kwarg = 'id'
 
     def get(self, request, *args, **kwargs):
         advertisement = self.get_object()
