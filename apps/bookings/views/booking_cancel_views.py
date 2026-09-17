@@ -9,6 +9,7 @@ from rest_framework import status
 class CancelBookingView(generics.UpdateAPIView):
     serializer_class = BookingStatusSerializer
     permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ['patch', 'options']
 
     def get_queryset(self):
         """

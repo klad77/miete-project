@@ -1,29 +1,20 @@
 from rest_framework import generics, permissions
-from rest_framework.response import Response
+
 from apps.bookings.models import Booking
-from apps.bookings.serializers.booking_serializers import BookingSerializer
-from rest_framework import status
+from apps.bookings.serializers.booking_status_serializers import (
+    OwnerBookingStatusSerializer,
+)
 
 
-class OwnerBookingListView(generics.ListAPIView):
-    serializer_class = BookingSerializer
+class OwnerBookingStatusView(generics.UpdateAPIView):
+    serializer_class = OwnerBookingStatusSerializer
     permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ['patch', 'options']
 
     def get_queryset(self):
-        # Під час створення Swagger-схеми користувач відсутній
         if getattr(self, 'swagger_fake_view', False):
             return Booking.objects.none()
 
-        # Бронювання квартир, що належать поточному власнику
         return Booking.objects.filter(
-            advertisement__owner=self.request.user
+            advertisement__owner=self.request.user,
         )
-
-    def patch(self, request, *args, **kwargs):
-        booking = self.get_object()
-        new_status = request.data.get('status')
-        if new_status in [Booking.CONFIRMED, Booking.CANCELED]:
-            booking.status = new_status
-            booking.save()
-            return Response({'status': 'Booking status updated successfully'}, status=status.HTTP_200_OK)
-        return Response({'error': 'Invalid status'}, status=status.HTTP_400_BAD_REQUEST)

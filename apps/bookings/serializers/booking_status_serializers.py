@@ -15,3 +15,22 @@ class BookingStatusSerializer(serializers.ModelSerializer):
         model = Booking
         fields = ['user', 'advertisement', 'start_date', 'end_date', 'status']
 
+class OwnerBookingStatusSerializer(serializers.ModelSerializer):
+    status = serializers.ChoiceField(
+        choices=[
+            Booking.CONFIRMED,
+            Booking.CANCELED,
+        ]
+    )
+
+    class Meta:
+        model = Booking
+        fields = ['status']
+
+    def validate_status(self, value):
+        if self.instance.status != Booking.PENDING:
+            raise serializers.ValidationError(
+                "Only a pending booking can be confirmed or rejected."
+            )
+
+        return value
