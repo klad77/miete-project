@@ -40,14 +40,14 @@ class Booking(models.Model):
 
     def cancel_booking(self):
         """
-        Відміна бронювання, якщо до початку бронювання більше 2 днів.
+        Дозволяє скасування не пізніше ніж за 2 дні до заїзду.
         """
         days_until_start = (self.start_date - timezone.now().date()).days
-        if days_until_start > 2:
+        if days_until_start >= 2:
             self.status = self.CANCELED
             self.save()
         else:
-            raise ValidationError("You can only cancel booking 2 days before start.")
+            raise ValidationError("Booking can be canceled at least 2 days before the start date.")
 
     def save(self, *args, **kwargs):
         # Автоматическая проверка даты окончания перед сохранением объекта

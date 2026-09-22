@@ -32,4 +32,6 @@ class CancelBookingView(generics.UpdateAPIView):
 
             return Response(serializer.data, status=status.HTTP_200_OK)
         except ValidationError as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+        {'error': e.messages},
+        status=status.HTTP_400_BAD_REQUEST,)
