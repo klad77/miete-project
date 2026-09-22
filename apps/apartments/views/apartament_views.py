@@ -6,6 +6,13 @@ from apps.apartments.models.advertisements import Advertisement
 from apps.apartments.serializers.apartment_serializers import AdvertisementSerializer
 from apps.apartments.models.view_advertisement import AdvertisementView
 
+class IsAdvertisementOwnerOrReadOnly(permissions.BasePermission):
+
+    def has_object_permission(self, request, view, obj):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+
+        return obj.owner == request.user
 
 class AdvertisementListCreateView(generics.ListCreateAPIView):
     queryset = Advertisement.objects.all()
@@ -20,7 +27,10 @@ class AdvertisementListCreateView(generics.ListCreateAPIView):
 class AdvertisementDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Advertisement.objects.filter(is_active=True)
     serializer_class = AdvertisementSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [
+    permissions.IsAuthenticatedOrReadOnly,
+    IsAdvertisementOwnerOrReadOnly,
+]
 
     def retrieve(self, request, *args, **kwargs):
         # Вызов стандартного метода получения объявления
