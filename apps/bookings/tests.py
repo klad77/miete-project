@@ -425,3 +425,227 @@ class AvailableDatesTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("available_dates", response.data)
         self.assertEqual(len(response.data["available_dates"]), 90)
+
+class BookingListAndDetailTests(APITestCase):
+
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            email="list_owner@example.com",
+            password="TestPassword123!",
+            username="list_owner",
+            first_name="List",
+            last_name="Owner",
+        )
+
+        self.other_owner = User.objects.create_user(
+            email="other_owner@example.com",
+            password="TestPassword123!",
+            username="other_owner",
+            first_name="Other",
+            last_name="Owner",
+        )
+
+        self.tenant = User.objects.create_user(
+            email="list_tenant@example.com",
+            password="TestPassword123!",
+            username="list_tenant",
+            first_name="List",
+            last_name="Tenant",
+        )
+
+        self.other_tenant = User.objects.create_user(
+            email="second_tenant@example.com",
+            password="TestPassword123!",
+            username="second_tenant",
+            first_name="Second",
+            last_name="Tenant",
+        )
+
+        self.advertisement = Advertisement.objects.create(
+            owner=self.owner,
+            title="Owner Apartment",
+            description="Apartment for booking list tests",
+            price_per_night="70.00",
+            city="Huckelhoven",
+            street="Ownerstrasse",
+            house_number="1",
+            rooms=2,
+            properties="APARTMENT",
+        )
+
+        self.other_advertisement = Advertisement.objects.create(
+            owner=self.other_owner,
+            title="Other Owner Apartment",
+            description="Apartment belonging to another owner",
+            price_per_night="90.00",
+            city="Erkelenz",
+            street="Otherstrasse",
+            house_number="2",
+            rooms=3,
+            properties="APARTMENT",
+        )
+
+        start_date = timezone.now().date() + timedelta(days=10)
+
+        self.pending_booking = Booking.objects.create(
+            user=self.tenant,
+            advertisement=self.advertisement,
+            start_date=start_date,
+            end_date=start_date + timedelta(days=2),
+            status=Booking.PENDING,
+        )
+
+        self.confirmed_booking = Booking.objects.create(
+            user=self.other_tenant,
+            advertisement=self.advertisement,
+            start_date=start_date + timedelta(days=3),
+            end_date=start_date + timedelta(days=5),
+            status=Booking.CONFIRMED,
+        )
+
+        self.other_booking = Booking.objects.create(
+            user=self.tenant,
+            advertisement=self.other_advertisement,
+            start_date=start_date + timedelta(days=6),
+            end_date=start_date + timedelta(days=8),
+            status=Booking.PENDING,
+        )
+
+        self.user_list_url = reverse("user-bookings")
+        self.owner_list_url = reverse("owner-bookings")
+
+    def test_booking_lists_require_authentication(self):
+        user_response = self.client.get(self.user_list_url)
+        owner_response = self.client.get(self.owner_list_url)
+
+        self.assertEqual(
+            user_response.status_code,
+            status.HTTP_401_UNAUTHORIZED,
+        )
+        self.assertEqual(
+            owner_response.status_code,
+            status.HTTP_401_UNAUTHORIZED,
+        )
+
+    def test_tenant_sees_only_own_bookings(self):
+        self.client.force_authenticate(user=self.tenant)
+
+        response = self.client.get(self.user_list_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 2)
+
+        returned_ids = {
+            item["id"] for item in response.data["results"]
+        }
+
+        self.assertEqual(
+            returned_ids,
+            {
+                self.pending_booking.id,
+                self.other_booking.id,
+            },
+        )
+
+    def test_tenant_can_filter_bookings_by_status(self):
+        self.client.force_authenticate(user=self.tenant)
+
+        response = self.client.get(
+            self.user_list_url,
+            {"status": Booking.PENDING},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 2)
+
+        for booking in response.data["results"]:
+            self.assertEqual(booking["status"], Booking.PENDING)
+
+    def test_owner_sees_only_bookings_for_own_advertisements(self):
+        self.client.force_authenticate(user=self.owner)
+
+        response = self.client.get(self.owner_list_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 2)
+
+        returned_ids = {
+            item["id"] for item in response.data["results"]
+        }
+
+        self.assertEqual(
+            returned_ids,
+            {
+                self.pending_booking.id,
+                self.confirmed_booking.id,
+            },
+        )
+        self.assertNotIn(self.other_booking.id, returned_ids)
+
+    def test_owner_can_filter_bookings_by_status(self):
+        self.client.force_authenticate(user=self.owner)
+
+        response = self.client.get(
+            self.owner_list_url,
+            {"status": Booking.CONFIRMED},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(
+            response.data["results"][0]["id"],
+            self.confirmed_booking.id,
+        )
+
+    def test_tenant_can_view_own_booking_detail(self):
+        self.client.force_authenticate(user=self.tenant)
+
+        url = reverse(
+            "booking-detail",
+            kwargs={"pk": self.pending_booking.pk},
+        )
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data["status"],
+            Booking.PENDING,
+        )
+
+    def test_tenant_cannot_view_another_users_booking(self):
+        self.client.force_authenticate(user=self.tenant)
+
+        url = reverse(
+            "booking-detail",
+            kwargs={"pk": self.confirmed_booking.pk},
+        )
+        response = self.client.get(url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_404_NOT_FOUND,
+        )
+
+    def test_booking_detail_does_not_allow_patch(self):
+        self.client.force_authenticate(user=self.tenant)
+
+        url = reverse(
+            "booking-detail",
+            kwargs={"pk": self.pending_booking.pk},
+        )
+        response = self.client.patch(
+            url,
+            {"status": Booking.CONFIRMED},
+            format="json",
+        )
+
+        self.pending_booking.refresh_from_db()
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_405_METHOD_NOT_ALLOWED,
+        )
+        self.assertEqual(
+            self.pending_booking.status,
+            Booking.PENDING,
+        )
