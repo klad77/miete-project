@@ -12,6 +12,8 @@ from apps.apartments.models import Advertisement
 from apps.apartments.models.view_advertisement import AdvertisementView
 from apps.users.models import User
 
+from apps.apartments.models.search_history import SearchHistory
+
 
 class AdvertisementTests(APITestCase):
 
@@ -343,3 +345,195 @@ class RatingTests(APITestCase):
             status.HTTP_400_BAD_REQUEST,
         )
         self.assertEqual(Rating.objects.count(), 1)
+
+class AdvertisementSearchTests(APITestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email="search_user@example.com",
+            password="TestPassword123!",
+            username="search_user",
+            first_name="Search",
+            last_name="User",
+        )
+
+        self.other_user = User.objects.create_user(
+            email="other_search@example.com",
+            password="TestPassword123!",
+            username="other_search_user",
+            first_name="Other",
+            last_name="User",
+        )
+
+        self.apartment = Advertisement.objects.create(
+            owner=self.user,
+            title="Central Apartment",
+            description="Apartment near the city centre",
+            price_per_night="60.00",
+            city="Huckelhoven",
+            street="Mainstrasse",
+            house_number="1",
+            rooms=2,
+            properties="APARTMENT",
+        )
+
+        self.house = Advertisement.objects.create(
+            owner=self.user,
+            title="Quiet House",
+            description="House with a garden",
+            price_per_night="120.00",
+            city="Erkelenz",
+            street="Gardenstrasse",
+            house_number="2",
+            rooms=4,
+            properties="HOUSE",
+        )
+
+        self.inactive_advertisement = Advertisement.objects.create(
+            owner=self.user,
+            title="Inactive Apartment",
+            description="This advertisement must not appear",
+            price_per_night="50.00",
+            city="Huckelhoven",
+            street="Oldstrasse",
+            house_number="3",
+            rooms=1,
+            properties="APARTMENT",
+            is_active=False,
+        )
+
+        self.search_url = reverse("advertisements-search")
+        self.history_url = reverse("search-history")
+        self.popular_url = reverse("popular-search")
+
+    def test_search_returns_only_matching_active_advertisements(self):
+        response = self.client.get(
+            self.search_url,
+            {"search": "Apartment"},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(
+            response.data["results"][0]["id"],
+            self.apartment.id,
+        )
+
+    def test_authenticated_search_is_saved_in_history(self):
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.get(
+            self.search_url,
+            {"search": "  garden  "},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(
+            SearchHistory.objects.filter(
+                user=self.user,
+                search_term="garden",
+            ).exists()
+        )
+
+    def test_anonymous_search_is_not_saved(self):
+        response = self.client.get(
+            self.search_url,
+            {"search": "garden"},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(SearchHistory.objects.count(), 0)
+
+    def test_user_sees_only_own_search_history(self):
+        SearchHistory.objects.create(
+            user=self.user,
+            search_term="apartment",
+        )
+        SearchHistory.objects.create(
+            user=self.other_user,
+            search_term="house",
+        )
+
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(self.history_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(
+            response.data["results"][0]["search_term"],
+            "apartment",
+        )
+
+    def test_search_filters_can_be_combined(self):
+        response = self.client.get(
+            self.search_url,
+            {
+                "city": "huckel",
+                "min_price": 50,
+                "max_price": 80,
+                "min_rooms": 2,
+                "max_rooms": 3,
+                "property_type": "APARTMENT",
+            },
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(
+            response.data["results"][0]["id"],
+            self.apartment.id,
+        )
+
+    def test_results_can_be_ordered_by_price(self):
+        response = self.client.get(
+            self.search_url,
+            {"ordering": "-price_per_night"},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 2)
+        self.assertEqual(
+            response.data["results"][0]["id"],
+            self.house.id,
+        )
+        self.assertEqual(
+            response.data["results"][1]["id"],
+            self.apartment.id,
+        )
+
+    def test_search_endpoint_does_not_allow_post(self):
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.post(
+            self.search_url,
+            {
+                "title": "Unexpected Advertisement",
+            },
+            format="json",
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_405_METHOD_NOT_ALLOWED,
+        )
+        self.assertEqual(Advertisement.objects.count(), 3)
+
+    def test_popular_searches_return_request_counts(self):
+        SearchHistory.objects.create(
+            user=self.user,
+            search_term="apartment",
+        )
+        SearchHistory.objects.create(
+            user=self.other_user,
+            search_term="apartment",
+        )
+        SearchHistory.objects.create(
+            user=self.user,
+            search_term="house",
+        )
+
+        response = self.client.get(self.popular_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data[0]["search_term"], "apartment")
+        self.assertEqual(response.data[0]["count"], 2)
