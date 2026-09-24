@@ -537,3 +537,163 @@ class AdvertisementSearchTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data[0]["search_term"], "apartment")
         self.assertEqual(response.data[0]["count"], 2)
+
+class AdvertisementStatusAndHistoryTests(APITestCase):
+
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            email="status_ad_owner@example.com",
+            password="TestPassword123!",
+            username="status_ad_owner",
+            first_name="Status",
+            last_name="Owner",
+        )
+
+        self.other_user = User.objects.create_user(
+            email="history_user@example.com",
+            password="TestPassword123!",
+            username="history_user",
+            first_name="History",
+            last_name="User",
+        )
+
+        self.advertisement = Advertisement.objects.create(
+            owner=self.owner,
+            title="Popular Apartment",
+            description="Popular apartment for testing",
+            price_per_night="80.00",
+            city="Huckelhoven",
+            street="Popularstrasse",
+            house_number="1",
+            rooms=2,
+            properties="APARTMENT",
+            view_count=10,
+        )
+
+        self.less_popular = Advertisement.objects.create(
+            owner=self.owner,
+            title="Less Popular House",
+            description="Less popular house for testing",
+            price_per_night="100.00",
+            city="Erkelenz",
+            street="Quietstrasse",
+            house_number="2",
+            rooms=4,
+            properties="HOUSE",
+            view_count=3,
+        )
+
+        self.inactive_advertisement = Advertisement.objects.create(
+            owner=self.owner,
+            title="Inactive Popular Advertisement",
+            description="Must not appear in popular results",
+            price_per_night="50.00",
+            city="Huckelhoven",
+            street="Hiddenstrasse",
+            house_number="3",
+            rooms=1,
+            properties="APARTMENT",
+            view_count=100,
+            is_active=False,
+        )
+
+        self.status_url = reverse(
+            "advertisement-status",
+            kwargs={"pk": self.advertisement.pk},
+        )
+        self.popular_url = reverse("popular-advertisements")
+        self.history_url = reverse("advertisement-view-history")
+
+    def test_owner_can_toggle_advertisement_status(self):
+        self.client.force_authenticate(user=self.owner)
+
+        first_response = self.client.post(self.status_url)
+        self.advertisement.refresh_from_db()
+
+        self.assertEqual(
+            first_response.status_code,
+            status.HTTP_200_OK,
+        )
+        self.assertFalse(self.advertisement.is_active)
+        self.assertFalse(first_response.data["is_active"])
+
+        second_response = self.client.post(self.status_url)
+        self.advertisement.refresh_from_db()
+
+        self.assertEqual(
+            second_response.status_code,
+            status.HTTP_200_OK,
+        )
+        self.assertTrue(self.advertisement.is_active)
+        self.assertTrue(second_response.data["is_active"])
+
+    def test_other_user_cannot_toggle_advertisement_status(self):
+        self.client.force_authenticate(user=self.other_user)
+
+        response = self.client.post(self.status_url)
+        self.advertisement.refresh_from_db()
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_404_NOT_FOUND,
+        )
+        self.assertTrue(self.advertisement.is_active)
+
+    def test_anonymous_user_cannot_toggle_status(self):
+        response = self.client.post(self.status_url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_401_UNAUTHORIZED,
+        )
+
+    def test_popular_advertisements_are_ordered_and_active(self):
+        response = self.client.get(self.popular_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 2)
+        self.assertEqual(
+            response.data["results"][0]["id"],
+            self.advertisement.id,
+        )
+        self.assertEqual(
+            response.data["results"][1]["id"],
+            self.less_popular.id,
+        )
+
+        returned_ids = [
+            item["id"] for item in response.data["results"]
+        ]
+
+        self.assertNotIn(
+            self.inactive_advertisement.id,
+            returned_ids,
+        )
+
+    def test_view_history_requires_authentication(self):
+        response = self.client.get(self.history_url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_401_UNAUTHORIZED,
+        )
+
+    def test_user_sees_only_own_view_history(self):
+        AdvertisementView.objects.create(
+            user=self.other_user,
+            advertisement=self.advertisement,
+        )
+        AdvertisementView.objects.create(
+            user=self.owner,
+            advertisement=self.less_popular,
+        )
+
+        self.client.force_authenticate(user=self.other_user)
+        response = self.client.get(self.history_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(
+            response.data["results"][0]["advertisement"],
+            self.advertisement.id,
+        )
