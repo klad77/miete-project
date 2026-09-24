@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from django.utils.deprecation import MiddlewareMixin
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from rest_framework_simplejwt.exceptions import TokenError
@@ -13,7 +13,10 @@ class JWTAuthenticationMiddleware(MiddlewareMixin):
         if access_token:
             try:
                 token = AccessToken(access_token)
-                if datetime.utcfromtimestamp(token['exp']) < datetime.utcnow():
+                if (
+    datetime.fromtimestamp(token['exp'], tz=timezone.utc)
+    < datetime.now(timezone.utc)
+):
                     raise TokenError('Token expired')
                 request.META['HTTP_AUTHORIZATION'] = f'Bearer {access_token}'
             except TokenError:
@@ -52,7 +55,7 @@ class JWTAuthenticationMiddleware(MiddlewareMixin):
                 httponly=True,
                 secure=False,  # Используйте True для HTTPS
                 samesite='Lax',
-                expires=datetime.utcfromtimestamp(access_expiry)
+                expires=datetime.fromtimestamp(access_expiry, tz=timezone.utc)
                 )
         return response
 

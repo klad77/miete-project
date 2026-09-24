@@ -9,7 +9,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly, IsAd
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from rest_framework.permissions import IsAuthenticated
-from datetime import datetime
+from datetime import datetime, timezone
 from django.contrib.auth import authenticate
 
 
@@ -25,8 +25,8 @@ def set_jwt_cookies(response, user):
     refresh_token = RefreshToken.for_user(user)
     access_token = refresh_token.access_token
 
-    access_expiry = datetime.utcfromtimestamp(access_token['exp'])
-    refresh_expiry = datetime.utcfromtimestamp(refresh_token['exp'])
+    access_expiry = datetime.fromtimestamp(access_token['exp'],tz=timezone.utc,)
+    refresh_expiry = datetime.fromtimestamp(refresh_token['exp'],tz=timezone.utc,)
 
     response.set_cookie(
         key='access_token',
