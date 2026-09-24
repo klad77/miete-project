@@ -25,6 +25,9 @@ class Advertisement(models.Model):
         default=Properties.ROOM
     )
 
+    class Meta:
+        ordering = ['-created_at']
+
     def average_rating(self):
         ratings = self.ratings.all()
         if ratings.exists():
