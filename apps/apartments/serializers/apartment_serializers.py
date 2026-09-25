@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from apps.apartments.models import Advertisement
 from apps.users.models.user import User
-
+from drf_spectacular.utils import extend_schema_field
 
 class AdvertisementSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source='owner.username')
@@ -10,7 +10,10 @@ class AdvertisementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Advertisement
         fields = '__all__'
-        # fields = ['id', 'title', 'description', 'price_per_night', 'created_at', 'owner', 'rooms']
+
+    @extend_schema_field(
+        serializers.FloatField(allow_null=True)
+    )
 
     def get_average_rating(self, obj):
         return obj.average_rating()

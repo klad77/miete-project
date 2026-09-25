@@ -27,6 +27,8 @@ class Booking(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=PENDING)
     is_completed = models.BooleanField(default=False)  # Флаг завершенного бронирования
     booking_date = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        ordering = ['-booking_date']
 
     def check_booking_status(self):
         """
