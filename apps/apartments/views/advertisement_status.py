@@ -3,10 +3,31 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from apps.apartments.models.advertisements import Advertisement
+from rest_framework import serializers
+from drf_spectacular.utils import extend_schema, inline_serializer
 
 
 class ToggleAdvertisementStatusView(APIView):
     permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        request=None,
+        responses={
+            200: inline_serializer(
+                name='AdvertisementStatusResponse',
+                fields={
+                    'status': serializers.CharField(),
+                    'is_active': serializers.BooleanField(),
+                },
+            ),
+            404: inline_serializer(
+                name='AdvertisementStatusErrorResponse',
+                fields={
+                    'error': serializers.CharField(),
+                },
+            ),
+        },
+    )
 
     def post(self, request, pk):
         try:

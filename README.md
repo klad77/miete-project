@@ -28,7 +28,8 @@ Miete is a Django REST API for managing rental housing. It supports users, prope
 - Django REST Framework 3.15
 - Simple JWT
 - django-filter
-- drf-yasg
+- drf-spectacular
+- OpenAPI 3
 - SQLite
 - MySQL 8.4
 - Docker and Docker Compose
@@ -95,6 +96,12 @@ ReDoc documentation:
 
 ```text
 http://127.0.0.1:8000/api/redoc/
+```
+
+OpenAPI 3 schema:
+
+```text
+http://127.0.0.1:8000/api/schema/
 ```
 
 View Django logs:
@@ -334,6 +341,12 @@ Run Django checks:
 
 ```powershell
 python manage.py check
+```
+
+Validate the OpenAPI 3 schema:
+
+```powershell
+python manage.py spectacular --file schema.yml --validate
 ```
 
 ## Security Notes

@@ -45,7 +45,20 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.SearchFilter',
-    ]
+    ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Miete API',
+    'DESCRIPTION': 'API for rental housing management',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'ENUM_NAME_OVERRIDES': {
+        'BookingStatusEnum': (
+            'apps.bookings.models.bookings.Booking.STATUS_CHOICES'
+        ),
+    },
 }
 
 SIMPLE_JWT = {
@@ -68,7 +81,7 @@ INSTALLED_APPS = [
     'django_filters',
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
-    'drf_yasg',
+    'drf_spectacular',
     'apps.users.apps.UsersConfig',
     'apps.bookings.apps.BookingsConfig',
     'apps.apartments.apps.ApartmentsConfig',

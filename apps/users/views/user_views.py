@@ -11,6 +11,12 @@ from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from rest_framework.permissions import IsAuthenticated
 from datetime import datetime, timezone
 from django.contrib.auth import authenticate
+from rest_framework import serializers
+from drf_spectacular.utils import (
+    OpenApiResponse,
+    extend_schema,
+    inline_serializer,
+)
 
 
 class UserRegistrationView(generics.CreateAPIView):
@@ -105,6 +111,15 @@ class LoginView(generics.GenericAPIView):
 
 class LogoutView(APIView):
 
+    @extend_schema(
+        request=None,
+        responses={
+            204: OpenApiResponse(
+                description='JWT cookies deleted successfully.'
+            ),
+        },
+    )
+
     def post(self, request, *args, **kwargs):
         response = Response(status=status.HTTP_204_NO_CONTENT)
         response.delete_cookie('access_token')
@@ -115,6 +130,18 @@ class LogoutView(APIView):
 class ProtectedDataView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        responses={
+            200: inline_serializer(
+                name='ProtectedDataResponse',
+                fields={
+                    'message': serializers.CharField(),
+                    'user': serializers.CharField(),
+                },
+            ),
+        },
+    )
 
     def get(self, request):
         return Response({
